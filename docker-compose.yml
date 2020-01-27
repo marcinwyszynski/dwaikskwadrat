@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  tracing:
+    image: openzipkin/zipkin-slim
+    ports: ["9411:9411"]
+  metrics:
+    image: philhawthorne/docker-influxdb-grafana
+    ports: ["3003:3003", "3004:8083", "8086:8086"]
+    volumes: ["grafana:/var/lib/grafana", "influxdb:/var/lib/influxdb"]
+
+volumes:
+  grafana:
+  influxdb:
