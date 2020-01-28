@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/circuitbreaker"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	httpkit "github.com/go-kit/kit/transport/http"
@@ -27,10 +26,13 @@ func main() {
 	mathService := new(pkg.MathService)
 	router := httprouter.New()
 
+	var defaultResponse pkg.IntegerResponse
+	defaultResponse.Body.Output = 42
+
 	middlewareChain := endpoint.Chain(
 		pkg.LoggingMiddleware(logger),
-		circuitbreaker.Hystrix("hystrix"),
 		pkg.Authorize(token),
+		pkg.CircuitBreaker("hystrix", defaultResponse),
 	)
 
 	defaultDoubler := pkg.MakeDoublerServerEndpoint(mathService)
