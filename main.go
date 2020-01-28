@@ -15,26 +15,29 @@ import (
 
 const (
 	binding = "localhost:8080"
+	token   = "bacon"
 )
 
 func main() {
 	logger := log.NewJSONLogger(os.Stdout)
 	logger = log.With(logger, "ts", log.Timestamp(time.Now))
 
+	authorization := pkg.Authorize(token)
 	mathService := new(pkg.MathService)
-
 	router := httprouter.New()
 
 	router.Handler(http.MethodPost, "/double", httpkit.NewServer(
-		pkg.MakeDoublerServerEndpoint(mathService),
+		authorization(pkg.MakeDoublerServerEndpoint(mathService)),
 		pkg.DecodeIntegerRequest,
 		httpkit.EncodeJSONResponse,
+		httpkit.ServerBefore(pkg.AddBearerTokenFromHTTP),
 	))
 
 	router.Handler(http.MethodPost, "/square", httpkit.NewServer(
-		pkg.MakeSquarerServerEndpoint(mathService),
+		authorization(pkg.MakeSquarerServerEndpoint(mathService)),
 		pkg.DecodeIntegerRequest,
 		httpkit.EncodeJSONResponse,
+		httpkit.ServerBefore(pkg.AddBearerTokenFromHTTP),
 	))
 
 	level.Info(logger).Log("msg", "starting server", "binding", binding)
