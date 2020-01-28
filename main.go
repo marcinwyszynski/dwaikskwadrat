@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	httpkit "github.com/go-kit/kit/transport/http"
@@ -22,19 +23,23 @@ func main() {
 	logger := log.NewJSONLogger(os.Stdout)
 	logger = log.With(logger, "ts", log.Timestamp(time.Now))
 
-	authorization := pkg.Authorize(token)
 	mathService := new(pkg.MathService)
 	router := httprouter.New()
 
+	middlewareChain := endpoint.Chain(
+		pkg.LoggingMiddleware(logger),
+		pkg.Authorize(token),
+	)
+
 	router.Handler(http.MethodPost, "/double", httpkit.NewServer(
-		authorization(pkg.MakeDoublerServerEndpoint(mathService)),
+		middlewareChain(pkg.MakeDoublerServerEndpoint(mathService)),
 		pkg.DecodeIntegerRequest,
 		httpkit.EncodeJSONResponse,
 		httpkit.ServerBefore(pkg.AddBearerTokenFromHTTP),
 	))
 
 	router.Handler(http.MethodPost, "/square", httpkit.NewServer(
-		authorization(pkg.MakeSquarerServerEndpoint(mathService)),
+		middlewareChain(pkg.MakeSquarerServerEndpoint(mathService)),
 		pkg.DecodeIntegerRequest,
 		httpkit.EncodeJSONResponse,
 		httpkit.ServerBefore(pkg.AddBearerTokenFromHTTP),
