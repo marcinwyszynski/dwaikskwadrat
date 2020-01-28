@@ -31,11 +31,19 @@ func main() {
 		pkg.Authorize(token),
 	)
 
+	defaultDoubler := pkg.MakeDoublerServerEndpoint(mathService)
+
 	router.Handler(http.MethodPost, "/double", httpkit.NewServer(
-		middlewareChain(pkg.MakeDoublerServerEndpoint(mathService)),
+		middlewareChain(pkg.Versioning(defaultDoubler, map[string]endpoint.Endpoint{
+			"v1": defaultDoubler,
+			"v2": pkg.MakeDoublerServerEndpointV2(mathService),
+		})),
 		pkg.DecodeIntegerRequest,
 		httpkit.EncodeJSONResponse,
-		httpkit.ServerBefore(pkg.AddBearerTokenFromHTTP),
+		httpkit.ServerBefore(
+			pkg.AddBearerTokenFromHTTP,
+			pkg.AddVersionFromHTTP,
+		),
 	))
 
 	router.Handler(http.MethodPost, "/square", httpkit.NewServer(
