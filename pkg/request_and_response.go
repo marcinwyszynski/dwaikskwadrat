@@ -3,6 +3,7 @@ package pkg
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -24,4 +25,15 @@ type IntegerResponse struct {
 		// The result of the calculation.
 		Output int `json:"output"`
 	} `json:"body"`
+}
+
+// DecodeIntegerResponse decodes integer response from the body, given the right
+// status code.
+func DecodeIntegerResponse(_ context.Context, r *http.Response) (interface{}, error) {
+	if code := r.StatusCode; code != http.StatusOK {
+		return nil, fmt.Errorf("unexpected response status code: %d", code)
+	}
+
+	var ret IntegerResponse
+	return ret, json.NewDecoder(r.Body).Decode(&ret)
 }

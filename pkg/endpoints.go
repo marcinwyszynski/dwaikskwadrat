@@ -2,9 +2,28 @@ package pkg
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"net/http"
+	"net/url"
 
 	"github.com/go-kit/kit/endpoint"
+	httpkit "github.com/go-kit/kit/transport/http"
 )
+
+// MakeIntegerClientEndpoint creates a client endpoint.
+func MakeIntegerClientEndpoint(host, path string) endpoint.Endpoint {
+	return httpkit.NewClient(
+		http.MethodPost,
+		&url.URL{Scheme: "http", Host: host, Path: path},
+		httpkit.EncodeJSONRequest,
+		DecodeIntegerResponse,
+		httpkit.ClientBefore(func(ctx context.Context, r *http.Request) context.Context {
+			r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", ctx.Value(contextKeyToken)))
+			return ctx
+		}),
+	).Endpoint()
+}
 
 // MakeDoublerServerEndpoint creates a server endpoint wrapping a Doubler.
 func MakeDoublerServerEndpoint(doubler Doubler) endpoint.Endpoint {
@@ -40,5 +59,23 @@ func MakeSquarerServerEndpoint(squarer Squarer) endpoint.Endpoint {
 		ret.Body.Output, err = squarer.Square(req.(IntegerRequest).Input)
 
 		return ret, err
+	}
+}
+
+// MakeDoubleSquarerServerEndpoint creates a server endpoint wrapping double and
+// square client endpoints.
+func MakeDoubleSquarerServerEndpoint(double, square endpoint.Endpoint) endpoint.Endpoint {
+	return func(ctx context.Context, req interface{}) (interface{}, error) {
+		ret, err := square(ctx, req)
+		if err != nil {
+			return ret, err
+		}
+
+		out, ok := ret.(IntegerResponse)
+		if !ok {
+			return nil, errors.New("unexpected double response format")
+		}
+
+		return double(ctx, IntegerRequest{Input: out.Body.Output})
 	}
 }

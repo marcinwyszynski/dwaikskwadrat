@@ -53,6 +53,16 @@ func main() {
 		httpkit.ServerBefore(pkg.AddBearerTokenFromHTTP),
 	))
 
+	router.Handler(http.MethodPost, "/doublesquare", httpkit.NewServer(
+		middlewareChain(pkg.MakeDoubleSquarerServerEndpoint(
+			pkg.MakeIntegerClientEndpoint(binding, "/double"),
+			pkg.MakeIntegerClientEndpoint(binding, "/square"),
+		)),
+		pkg.DecodeIntegerRequest,
+		httpkit.EncodeJSONResponse,
+		httpkit.ServerBefore(pkg.AddBearerTokenFromHTTP),
+	))
+
 	level.Info(logger).Log("msg", "starting server", "binding", binding)
 	level.Error(logger).Log("problem", http.ListenAndServe(binding, router))
 }
