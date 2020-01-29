@@ -8,6 +8,6 @@ require (
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/julienschmidt/httprouter v1.3.0
-	github.com/sony/gobreaker v0.4.1 // indirect
-	github.com/streadway/handy v0.0.0-20200128134331-0f66f006fb2e // indirect
+	github.com/openzipkin/zipkin-go v0.2.2
+	github.com/smartystreets/goconvey v1.6.4 // indirect
 )

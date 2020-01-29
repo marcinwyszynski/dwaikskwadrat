@@ -8,11 +8,13 @@ import (
 	"net/url"
 
 	"github.com/go-kit/kit/endpoint"
+	zipkinkit "github.com/go-kit/kit/tracing/zipkin"
 	httpkit "github.com/go-kit/kit/transport/http"
+	"github.com/openzipkin/zipkin-go"
 )
 
 // MakeIntegerClientEndpoint creates a client endpoint.
-func MakeIntegerClientEndpoint(host, path string) endpoint.Endpoint {
+func MakeIntegerClientEndpoint(tracer *zipkin.Tracer, host, path string) endpoint.Endpoint {
 	return httpkit.NewClient(
 		http.MethodPost,
 		&url.URL{Scheme: "http", Host: host, Path: path},
@@ -22,6 +24,7 @@ func MakeIntegerClientEndpoint(host, path string) endpoint.Endpoint {
 			r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", ctx.Value(contextKeyToken)))
 			return ctx
 		}),
+		zipkinkit.HTTPClientTrace(tracer, zipkinkit.Tags(map[string]string{"role": "client"})),
 	).Endpoint()
 }
 
