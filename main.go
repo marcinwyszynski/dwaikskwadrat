@@ -1,3 +1,25 @@
+// Package classification: Dwa iks kwadrat API
+//
+// This application performs sophisticated mathematical calculations for the
+// company.
+//
+// Schemes: http, https
+// Host: localhost:8080
+// Version: 0.1
+// Contact: Marcin Wyszynski<marcinw@spacelift.io> https://spacelift.io
+//
+// Consumes:
+//   - application/json
+//
+// Produces:
+//   - application/json
+//
+// SecurityDefinitions:
+//   Bearer:
+//     type: apiKey
+//     name: Authorization
+//     in: header
+// swagger:meta
 package main
 
 import (
@@ -85,6 +107,13 @@ func main() {
 
 	defaultDoubler := pkg.MakeDoublerServerEndpoint(mathService)
 
+	// swagger:route POST /double doubleNumber
+	//
+	// security:
+	//   - Bearer: []
+	//
+	// Responses:
+	//   200: integerResponse
 	router.Handler(http.MethodPost, "/double", httpkit.NewServer(
 		middlewareChain(pkg.Versioning(defaultDoubler, map[string]endpoint.Endpoint{
 			"v1": defaultDoubler,
@@ -99,6 +128,13 @@ func main() {
 		zipkinServerOption,
 	))
 
+	// swagger:route POST /square squareNumber
+	//
+	// security:
+	//   - Bearer: []
+	//
+	// Responses:
+	//   200: integerResponse
 	router.Handler(http.MethodPost, "/square", httpkit.NewServer(
 		middlewareChain(pkg.MakeSquarerServerEndpoint(mathService)),
 		pkg.DecodeIntegerRequest,
@@ -107,6 +143,13 @@ func main() {
 		zipkinServerOption,
 	))
 
+	// swagger:route POST /doublesquare doubleSquareNumber
+	//
+	// security:
+	//   - Bearer: []
+	//
+	// Responses:
+	//   200: integerResponse
 	router.Handler(http.MethodPost, "/doublesquare", httpkit.NewServer(
 		middlewareChain(pkg.MakeDoubleSquarerServerEndpoint(
 			pkg.MakeIntegerClientEndpoint(tracer, binding, "/double"),

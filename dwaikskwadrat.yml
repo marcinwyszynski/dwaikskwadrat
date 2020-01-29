@@ -1,0 +1,83 @@
+consumes:
+- application/json
+host: localhost:8080
+info:
+  contact:
+    email: marcinw@spacelift.io
+    name: Marcin Wyszynski
+    url: https://spacelift.io
+  description: |-
+    This application performs sophisticated mathematical calculations for the
+    company.
+  title: Dwa iks kwadrat API
+  version: "0.1"
+paths:
+  /double:
+    post:
+      operationId: doubleNumber
+      parameters:
+      - format: int64
+        in: query
+        name: input
+        type: integer
+        x-go-name: Input
+      responses:
+        "200":
+          $ref: '#/responses/integerResponse'
+      security:
+      - Bearer:
+        - '[]'
+  /doublesquare:
+    post:
+      operationId: doubleSquareNumber
+      parameters:
+      - format: int64
+        in: query
+        name: input
+        type: integer
+        x-go-name: Input
+      responses:
+        "200":
+          $ref: '#/responses/integerResponse'
+      security:
+      - Bearer:
+        - '[]'
+  /square:
+    post:
+      operationId: squareNumber
+      parameters:
+      - format: int64
+        in: query
+        name: input
+        type: integer
+        x-go-name: Input
+      responses:
+        "200":
+          $ref: '#/responses/integerResponse'
+      security:
+      - Bearer:
+        - '[]'
+produces:
+- application/json
+responses:
+  integerResponse:
+    description: An IntegerResponse is an integer result of a successful calculation.
+    schema:
+      properties:
+        output:
+          description: The result of the calculation.
+          format: int64
+          type: integer
+          x-go-name: Output
+      required:
+      - output
+      type: object
+schemes:
+- http
+- https
+securityDefinitions:
+  Bearer:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

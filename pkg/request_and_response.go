@@ -8,6 +8,7 @@ import (
 )
 
 // An IntegerRequest is a request to do something with an integer.
+// swagger:parameters doubleNumber doubleSquareNumber squareNumber
 type IntegerRequest struct {
 	Input int `json:"input"`
 }
@@ -19,10 +20,13 @@ func DecodeIntegerRequest(_ context.Context, r *http.Request) (interface{}, erro
 }
 
 // An IntegerResponse is an integer result of a successful calculation.
+// swagger:response integerResponse
 type IntegerResponse struct {
 	// Response body
+	// in: body
 	Body struct {
 		// The result of the calculation.
+		// required: true
 		Output int `json:"output"`
 	} `json:"body"`
 }
