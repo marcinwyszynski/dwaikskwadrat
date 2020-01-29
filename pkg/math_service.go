@@ -1,6 +1,11 @@
 package pkg
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+
+	"github.com/go-kit/kit/metrics"
+)
 
 var errNegative = errors.New("we don't like negativity here")
 
@@ -15,22 +20,48 @@ type Squarer interface {
 }
 
 // MathService is an implementation of Doubler and Squarer interfaces.
-type MathService struct{}
+type MathService struct {
+	Operations metrics.Counter
+}
 
 // Double implements Doubler interface.
-func (*MathService) Double(a int) (int, error) {
+func (m *MathService) Double(a int) (ret int, err error) {
+	ret = -1
+
+	defer func() {
+		m.Operations.With(
+			"operation", "double",
+			"success", fmt.Sprintf("%t", err == nil),
+		).Add(1)
+	}()
+
 	if a < 0 {
-		return -1, errNegative
+		err = errNegative
+		return
 	}
 
-	return 2 * a, nil
+	ret = 2 * a
+
+	return
 }
 
 // Square implements Squarer interface.
-func (*MathService) Square(a int) (int, error) {
+func (m *MathService) Square(a int) (ret int, err error) {
+	ret = -1
+
+	defer func() {
+		m.Operations.With(
+			"operation", "square",
+			"success", fmt.Sprintf("%t", err == nil),
+		).Add(1)
+	}()
+
 	if a < 0 {
-		return -1, errNegative
+		err = errNegative
+		return
 	}
 
-	return a * a, nil
+	ret = a * a
+
+	return
 }

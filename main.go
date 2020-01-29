@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"time"
@@ -8,8 +9,10 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	influxkit "github.com/go-kit/kit/metrics/influx"
 	zipkinkit "github.com/go-kit/kit/tracing/zipkin"
 	httpkit "github.com/go-kit/kit/transport/http"
+	influxdb "github.com/influxdata/influxdb1-client/v2"
 	"github.com/julienschmidt/httprouter"
 	"github.com/openzipkin/zipkin-go"
 	zipkinhttp "github.com/openzipkin/zipkin-go/reporter/http"
@@ -46,13 +49,33 @@ func main() {
 		zipkinkit.Tags(map[string]string{"role": "server"}),
 	)
 
-	mathService := new(pkg.MathService)
+	influxClient, err := influxdb.NewHTTPClient(influxdb.HTTPConfig{Addr: "http://localhost:8086"})
+	if err != nil {
+		level.Error(logger).Log("error", "failed to create InfluxDB client", "cause", err)
+		os.Exit(1)
+	}
+	defer influxClient.Close()
+
+	influxFactory := influxkit.New(
+		map[string]string{"service": "dwaikskwadrat"},
+		influxdb.BatchPointsConfig{Database: "metrics"},
+		logger,
+	)
+
+	go func() {
+		influxFactory.WriteLoop(context.Background(), time.Tick(10*time.Second), influxClient)
+	}()
+
+	mathService := &pkg.MathService{
+		Operations: influxFactory.NewCounter("operations"),
+	}
 	router := httprouter.New()
 
 	var defaultResponse pkg.IntegerResponse
 	defaultResponse.Body.Output = 42
 
 	middlewareChain := endpoint.Chain(
+		pkg.MetricsMiddleware(influxFactory.NewGauge("goroutines"), influxFactory.NewHistogram("requests")),
 		pkg.LoggingMiddleware(logger),
 		zipkinkit.TraceEndpoint(tracer, "auth"),
 		pkg.Authorize(token),
